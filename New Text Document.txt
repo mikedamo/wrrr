@@ -1,0 +1,56 @@
+# Step 1: Import Required Libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+
+# Step 2: Load the Data
+# Load the dataset
+data = pd.read_csv('spam.csv', encoding='latin-1')
+
+# Inspect the data
+print(data.head())
+
+# Clean the data: we will only need 'v1' (label) and 'v2' (message)
+data = data[['v1', 'v2']]
+data.columns = ['label', 'message']
+
+# Step 3: Preprocess the Data
+# Convert labels to binary values: ham = 0, spam = 1
+data['label'] = data['label'].map({'ham': 0, 'spam': 1})
+
+# Split the data into training and testing sets
+X = data['message']
+y = data['label']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Create a Machine Learning Model
+# Create a pipeline with CountVectorizer and MultinomialNB
+model = Pipeline([
+    ('vectorizer', CountVectorizer()),
+    ('classifier', MultinomialNB())
+])
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Step 5: Create the predict_message function
+def predict_message(message):
+    # Predict the probability of the message being spam
+    prob = model.predict_proba([message])[0]
+    likelihood = prob[1]  # Probability of being spam
+    label = 'spam' if likelihood >= 0.5 else 'ham'
+    return [likelihood, label]
+
+# Step 6: Test the Function
+# Example messages to test
+test_messages = [
+    "Free entry in 2 a weekly competition to win FA Cup tickets.",
+    "Hi, how are you? I hope you're having a great day!",
+]
+
+# Print predictions
+for msg in test_messages:
+    result = predict_message(msg)
+    print(f"Message: '{msg}' | Likelihood: {result[0]:.2f} | Classification: {result[1]}")
